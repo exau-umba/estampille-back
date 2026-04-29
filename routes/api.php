@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Controllers\Api\CertificateController;
 use App\Http\Controllers\Api\CompanyController;
+use App\Http\Controllers\Api\CounterfeitReportController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\QrBatchController;
 use App\Http\Controllers\Api\QrCodeController;
@@ -31,4 +32,6 @@ Route::prefix('v1')->group(function (): void {
     });
 
     Route::get('/verify/{token}', [VerificationController::class, 'show'])->where('token', '.*');
+    Route::get('/verify-code/{code}', [VerificationController::class, 'showByCode'])->where('code', '[A-Za-z0-9]{4}');
+    Route::post('/report-counterfeit', [CounterfeitReportController::class, 'store']);
 });
