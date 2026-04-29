@@ -1,41 +1,50 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement('ALTER TABLE qr_codes DROP CONSTRAINT IF EXISTS qr_codes_code_unique');
+        if (!Schema::hasTable('qr_codes')) {
+            return;
+        }
 
-        DB::statement(
-            "DO $$
-            BEGIN
-                IF NOT EXISTS (
-                    SELECT 1 FROM pg_constraint WHERE conname = 'qr_codes_batch_id_code_unique'
-                ) THEN
-                    ALTER TABLE qr_codes ADD CONSTRAINT qr_codes_batch_id_code_unique UNIQUE (batch_id, code);
-                END IF;
-            END
-            $$;"
-        );
+        Schema::table('qr_codes', function (Blueprint $table): void {
+            try {
+                $table->dropUnique('qr_codes_code_unique');
+            } catch (\Throwable) {
+                // constraint may already be removed
+            }
+
+            try {
+                $table->unique(['batch_id', 'code'], 'qr_codes_batch_id_code_unique');
+            } catch (\Throwable) {
+                // constraint may already exist
+            }
+        });
     }
 
     public function down(): void
     {
-        DB::statement('ALTER TABLE qr_codes DROP CONSTRAINT IF EXISTS qr_codes_batch_id_code_unique');
+        if (!Schema::hasTable('qr_codes')) {
+            return;
+        }
 
-        DB::statement(
-            "DO $$
-            BEGIN
-                IF NOT EXISTS (
-                    SELECT 1 FROM pg_constraint WHERE conname = 'qr_codes_code_unique'
-                ) THEN
-                    ALTER TABLE qr_codes ADD CONSTRAINT qr_codes_code_unique UNIQUE (code);
-                END IF;
-            END
-            $$;"
-        );
+        Schema::table('qr_codes', function (Blueprint $table): void {
+            try {
+                $table->dropUnique('qr_codes_batch_id_code_unique');
+            } catch (\Throwable) {
+                // constraint may already be removed
+            }
+
+            try {
+                $table->unique('code', 'qr_codes_code_unique');
+            } catch (\Throwable) {
+                // constraint may already exist
+            }
+        });
     }
 };
