@@ -73,7 +73,11 @@ jobs:
             git checkout "${{ github.ref_name }}"
             git pull origin "${{ github.ref_name }}"
             docker compose pull || true
-            docker compose up -d --build app nginx worker scheduler
-            docker compose --profile horizon up -d horizon || true
+            docker compose up -d --build app nginx
+            docker compose exec -T app composer install --no-interaction --prefer-dist --optimize-autoloader
+            docker compose exec -T app php -r "file_exists('.env') || copy('.env.example', '.env');"
+            docker compose exec -T app php artisan key:generate --force || true
             docker compose exec -T app php artisan migrate --force
             docker compose exec -T app php artisan optimize
+            docker compose up -d worker scheduler
+            docker compose --profile horizon up -d horizon || true
